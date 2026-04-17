@@ -1,0 +1,11 @@
+exam_id,type,question,optionA,optionB,optionC,optionD,correct_answer
+1,mcq,What is JVM?,Java Variable Machine,Java Virtual Machine,Java Verified Machine,Java Visual Machine,Java Virtual Machine
+1,mcq,Which keyword is used to inherit a class in Java?,this,super,extends,implements,extends
+1,mcq,Which data type is used to create a variable that should store text?,int,String,float,char,String
+1,mcq,Which method is the entry point of a Java program?,start(),main(),run(),init(),main()
+1,mcq,Which operator is used for comparison in Java?,=,==,!=,<=,==
+1,mcq,Which of these is not a Java primitive type?,int,float,String,char,String
+1,mcq,Which keyword is used to define a constant in Java?,final,const,static,constant,final
+1,mcq,Which loop is guaranteed to execute at least once?,for,while,do-while,foreach,do-while
+1,mcq,Which exception is thrown when dividing by zero?,NullPointerException,ArithmeticException,IOException,ClassNotFoundException,ArithmeticException
+1,mcq,Which package contains Scanner class?,java.util,java.io,java.lang,java.net,java.util
