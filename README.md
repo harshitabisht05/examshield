@@ -64,11 +64,11 @@ Marketing site with hero, feature grid, "How It Works", testimonials, and CTA.
 - ⚛️ React 18 + Vite (lightning-fast dev experience)
 - 🎨 Tailwind CSS v4 (CSS-first `@theme` configuration)
 - 🧭 React Router 7 (modern routing)
-- 📡 Axios (ready for backend integration)
+- 📡 Axios (wired to the Express backend via Vite proxy)
 
 **Backend** (in `/backend`)
 - 🟢 Node.js + Express
-- 🍃 MongoDB + Mongoose
+- 🐬 MySQL (or MariaDB / XAMPP) via `mysql2`
 - 🔐 JWT auth, bcrypt, role-based middleware
 - ⏱ Rate limiting + input validation
 
@@ -107,21 +107,51 @@ frontend/src/
 
 ## ▶️ Running Locally
 
+ExamShield is a two-process app: an Express + MySQL **backend** and a Vite + React **frontend**. You'll need both running.
+
+### 0. Prerequisites
+
+- Node.js 18+
+- A running MySQL or MariaDB server (XAMPP works out of the box)
+
+### 1. Database setup (one-time)
+
+Start MySQL/MariaDB, then in a terminal:
+
 ```bash
-# Install dependencies
-npm install
+# create the database + the app's user
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS examshield; CREATE USER IF NOT EXISTS 'examshield_user'@'localhost' IDENTIFIED BY 'ExamShield@123'; GRANT ALL PRIVILEGES ON examshield.* TO 'examshield_user'@'localhost'; FLUSH PRIVILEGES;"
 
-# Start dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+# load the schema
+mysql -u examshield_user -pExamShield@123 examshield < backend/db.sql
 ```
 
-Dev server runs on **http://localhost:5173** by default.
+### 2. Backend (port 5000)
+
+```bash
+cd backend
+npm install
+npm run seed     # seed the two demo accounts (one-time)
+npm start        # → http://localhost:5000
+```
+
+You should see `Connected to MySQL ✅`. Health check: http://localhost:5000/health.
+
+### 3. Frontend (port 5173) — in a second terminal, from repo root
+
+```bash
+npm install
+npm run dev      # → http://localhost:5173
+```
+
+Open **http://localhost:5173**, click **"Use Demo →"** on `/login`, and you're in.
+
+### Build
+
+```bash
+npm run build      # production frontend bundle
+npm run preview    # preview the bundle
+```
 
 ---
 
