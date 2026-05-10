@@ -1,7 +1,10 @@
 import React from 'react';
 import Sidebar from './Sidebar';
+import { useAuth } from '../../contexts/AuthContext';
+import { getInitials } from '../../lib/user';
 
 const DashboardLayout = ({ children, role = 'student' }) => {
+  const { user } = useAuth();
   const studentLinks = [
     { path: '/student/dashboard', label: 'Dashboard', icon: '🏠' },
     { path: '/student/exams', label: 'Available Exams', icon: '📝' },
@@ -21,9 +24,9 @@ const DashboardLayout = ({ children, role = 'student' }) => {
             {role} Portal
           </h2>
           <div className="flex items-center space-x-3">
-            <span className="text-sm font-medium text-slate-600">Sneha Singh</span>
+            <span className="text-sm font-medium text-slate-600">{user?.name || 'Guest'}</span>
             <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">
-              SS
+              {getInitials(user?.name)}
             </div>
           </div>
         </header>
