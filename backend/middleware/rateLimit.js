@@ -22,11 +22,11 @@ const rateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
   };
 };
 
-// Stricter rate limit for auth routes
-const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
+// Auth route rate limit — generous enough for demo / multi-evaluator use
+const authRateLimit = rateLimit(15 * 60 * 1000, 50); // 50 requests per 15 minutes per IP
 
 // General API rate limit
-const apiRateLimit = rateLimit(1 * 60 * 1000, 30); // 30 requests per minute
+const apiRateLimit = rateLimit(1 * 60 * 1000, 200); // 200 requests per minute per IP
 
 module.exports = {
   rateLimit,

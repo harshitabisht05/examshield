@@ -84,6 +84,22 @@ exports.login = (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    res.json({ token, role: user.role, expiresIn: JWT_EXPIRES_IN });
+    res.json({
+      token,
+      expiresIn: JWT_EXPIRES_IN,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    });
+  });
+};
+
+exports.me = (req, res) => {
+  userModel.findById(req.user.id, (err, results) => {
+    if (err) {
+      console.error("Fetch me error:", err);
+      return res.status(500).json({ error: "Failed to fetch user" });
+    }
+    if (results.length === 0) return res.status(404).json({ error: "User not found" });
+    const user = results[0];
+    res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   });
 };
