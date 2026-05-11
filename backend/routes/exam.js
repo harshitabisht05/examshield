@@ -35,24 +35,26 @@ const parseCsvRows = (buffer) => {
 };
 
 // CREATE EXAM
-router.post("/create", authMiddleware, allowRoles("examiner"), (req, res) => {
-  const { title, duration } = req.body;
+router.post("/create", authMiddleware, allowRoles("admin", "examiner"), (req, res) => {
+  let { title, duration, startsAt } = req.body;
   const created_by = req.user.id;
 
-  if (!title || !duration) {
-    return res.status(400).json({ error: "title and duration are required" });
+  if (!title || !duration || !startsAt) {
+    return res.status(400).json({ error: "title, duration and startsAt are required" });
   }
 
-  examModel.createExam(title, duration, created_by, (err, result) => {
+  startsAt = String(startsAt).replace('T', ' ');
+
+  examModel.createExam(title, duration, startsAt, created_by, (err, result) => {
     if (err) return res.status(500).json({ error: "Database error", details: err });
 
-    logModel.saveLog(created_by, "exam_created", { examId: result.insertId, title }, () => {});
+    logModel.saveLog(created_by, "exam_created", { examId: result.insertId, title, startsAt }, () => {});
     res.status(201).json({ message: "Exam created successfully ✅", examId: result.insertId });
   });
 });
 
 // ADD QUESTION
-router.post("/add-question", authMiddleware, allowRoles("examiner"), (req, res) => {
+router.post("/add-question", authMiddleware, allowRoles("admin", "examiner"), (req, res) => {
   const {
     exam_id,
     type,
@@ -107,7 +109,7 @@ router.get("/", authMiddleware, (req, res) => {
 router.post(
   "/bulk-upload",
   authMiddleware,
-  allowRoles("examiner"),
+  allowRoles("admin", "examiner"),
   upload.single("file"),
   async (req, res) => {
     if (!req.file) {
@@ -154,10 +156,41 @@ router.post(
 );
 
 // LIST EXAMINER EXAMS
-router.get("/mine", authMiddleware, allowRoles("examiner"), (req, res) => {
+router.get("/mine", authMiddleware, allowRoles("admin", "examiner"), (req, res) => {
   examModel.findByCreator(req.user.id, (err, results) => {
     if (err) return res.status(500).json({ error: "Database error", details: err });
     res.json(results);
+  });
+});
+
+router.put("/:exam_id", authMiddleware, allowRoles("admin", "examiner"), (req, res) => {
+  const { exam_id } = req.params;
+  let { title, duration, startsAt } = req.body;
+
+  if (!title || !duration || !startsAt) {
+    return res.status(400).json({ error: "title, duration and startsAt are required" });
+  }
+
+  startsAt = String(startsAt).replace('T', ' ');
+
+  examModel.updateExam(exam_id, { title, duration, startsAt }, (err, result) => {
+    if (err) return res.status(500).json({ error: "Database error", details: err });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+    res.json({ message: "Exam updated successfully" });
+  });
+});
+
+router.delete("/:exam_id", authMiddleware, allowRoles("admin", "examiner"), (req, res) => {
+  const { exam_id } = req.params;
+
+  examModel.deleteExam(exam_id, (err, result) => {
+    if (err) return res.status(500).json({ error: "Database error", details: err });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Exam not found" });
+    }
+    res.json({ message: "Exam deleted successfully" });
   });
 });
 
@@ -188,22 +221,31 @@ const randomizeMcqOptions = (question) => {
 router.get("/:exam_id", authMiddleware, (req, res) => {
   const { exam_id } = req.params;
 
-  questionModel.findByExamId(exam_id, (err, results) => {
+  examModel.findById(exam_id, (err, examResults) => {
     if (err) return res.status(500).json({ error: "Database error", details: err });
-
-    if (req.user.role === "student") {
-      logModel.saveLog(req.user.id, "exam_started", { exam_id, questionCount: results.length }, () => {});
+    if (!examResults || examResults.length === 0) {
+      return res.status(404).json({ error: "Exam not found" });
     }
 
-    const shuffledQuestions = shuffleArray(results);
-    const mapped = shuffledQuestions.map((question) => {
-      if (question.type === "mcq") {
-        return randomizeMcqOptions(question);
-      }
-      return question;
-    });
+    const exam = examResults[0];
 
-    res.json(mapped);
+    questionModel.findByExamId(exam_id, (err, results) => {
+      if (err) return res.status(500).json({ error: "Database error", details: err });
+
+      if (req.user.role === "student") {
+        logModel.saveLog(req.user.id, "exam_started", { exam_id, questionCount: results.length }, () => {});
+      }
+
+      const shuffledQuestions = shuffleArray(results);
+      const mapped = shuffledQuestions.map((question) => {
+        if (question.type === "mcq") {
+          return randomizeMcqOptions(question);
+        }
+        return question;
+      });
+
+      res.json({ exam, questions: mapped });
+    });
   });
 });
 
